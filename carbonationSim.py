@@ -63,5 +63,10 @@ def calc_conc_from_moles(T,B,D):
     #calculate the concentration of gas in liquid layer from amount of moles dissovled
     pass
 
-        
+def run_simulation(tank,dt,final_t):
+    #simulate the tank with time step dt
+    #might want to switch this out for an implementation in Pygame - for drawing and stuff
+    pass
+
+
         
