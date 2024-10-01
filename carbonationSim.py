@@ -1,5 +1,4 @@
 import numpy as np
-#blah
 
 #necessary properties (fill as we go)
 liq_dens = 1 #liquid density 
