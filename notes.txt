@@ -1,0 +1,11 @@
+
+beer ingredients:
+water
+malt
+barley
+hops (yeast)
+
+notes:
+barley and hops affects ABV
+what kind of beer...
+what temperature...
