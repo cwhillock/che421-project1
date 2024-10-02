@@ -49,6 +49,7 @@ class tank:
 #necessary functions (create later)
 def calc_P_from_moles_in_V(T,B,D):
     # calculate the pressure of a gas given the volume of the container and the amount of moles in that volume
+    #use peng robinson
     pass
 
 def calc_vapor_to_liq_flux(T,B,D):
