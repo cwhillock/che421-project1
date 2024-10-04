@@ -1,73 +1,44 @@
 import numpy as np
+from tabulate import tabulate
 
-#necessary properties (fill as we go)
-liq_dens = 1 #liquid density 
+class liquid:
+    def __init__(self,density):
+        self.density = density #mol/m3
+
+class gas:
+    def __init__(self,avg_bubble_diameter):
+        self.avg_bubble_diameter = avg_bubble_diameter #m
+        self.avg_bubble_size = 4/3*3.14156*(avg_bubble_diameter/2)**3
 
 class tank:
-    def __init__(self,area,height,temp,liq_mol_HU,num_sections,gas_mol_HU):
-        #static vars
-        self.area = area #tank cross sectional area
-        self.height = height #tank height
+    def __init__(self,area,height,liquid,gas,liq_holdup,gas_holdup,bubbler_flow,temp):
+        #static geometry vars
+        self.area = area
+        self.height = height
+        self.liquid = liquid
+        self.gas = gas
+        self.liq_holdup = liq_holdup #mol
         self.temp = temp
-        self.liq_mol_HU = liq_mol_HU #holdup (molar/mass TBD) of liquid in tank
-        self.num_sections = num_sections
-        self.liq_vol = liq_mol_HU / liq_dens #volume of liquid in tank
-        self.liq_height = self.liq_vol / self.area #height of liquid in tank
-        self.head_vol = (height - self.liq_height)*area #volume of head in top of tank
-        self.liq_disc_height = self.liq_height / num_sections #height of one discretization
-        self.liq_disc_vol = self.liq_disc_height * area
-        self.liq_disc_pos = [0] #position of each discretized layer of liquid (going down)
-        for i in range(num_sections):
-            self.liq_disc_pos.append(self.liq_disc_pos[-1] + self.liq_disc_height)
-        
-        #changing vars
-        self.gas_mol_HU = gas_mol_HU #moles of gas in head space
-        self.head_pressure = calc_P_from_moles_in_V(gas_mol_HU,self.head_vol) #pressure in head space
-        self.dissolved_gas = np.zeros(num_sections) #moles of dissolved gas in each liquid section
-        self.concentrations = np.zeros(num_sections) #concentration of gas in each section
-        self.flow_to_head = 0 #flow to head space (can be negative)
-        self.flow_to_section = np.zeros(num_sections) #flow to each section (can be negative)
+        self.liq_vol = liq_holdup / liquid.density
+        self.liq_height = self.liq_vol / area
+        self.head_height = height - self.liq_height
+        self.head_vol = self.head_height * area
 
-    def calculate_flows(self):
-        #calculate the flowrates to the head and each liquid discretization
-        #based on current tank concentration gradient
-        #updates to the flow arrays
-        self.flow_to_head = calc_vapor_to_liq_flux(self.head_pressure,self.concentrations[0]) * self.area
-        self.flow_to_section[0] =  self.flow_to_head + calc_liq_to_liq_flux(self.concentrations[0],self.concentrations[1]) * self.area
-        for i in range(1,self.num_sections - 1):
-            self.flow_to_section[i] = calc_liq_to_liq_flux(self.concentrations[i-1],self.concentrations[i]) * self.area + calc_liq_to_liq_flux(self.concentrations[i],self.concentrations[i+1]) * self.area
-        self.flow_to_section[-1] = calc_liq_to_liq_flux(self.concentrations[-2],self.concentrations[-1]) * self.area
+        #static bubble vars
+        self.bubbler_flow = bubbler_flow #m3/s
+        self.num_new_bubbles = bubbler_flow / gas.avg_bubble_size
 
-    def update_system_state(self, dt):
-        self.gas_mol_HU += self.flow_to_head * dt
-        for i in range(self.num_sections):
-            self.dissolved_gas[i] += self.flow_to_section[i] * dt
-            self.concentrations[i] = calc_conc_from_moles(self.dissolved_gas[i],self.liq_disc_vol)
-        
+        #dynamic vars
+        self.gas_holdup = gas_holdup #mol
+        self.head_pressure = calc_Pgas(self.gas_holdup,self.liq_vol,temp)
+        self.dissolved_gas = 0
+        self.liq_conc = self.dissolved_gas / self.liq_vol
+
+def calc_Pgas(n,v,t):
+    #calculate pressure of gas from holdup,volume, and temperature
+    #in the future should use cubic eos
+    #ideal gas law for now
+    R = 8.31446261815324 #m3*Pa/K/mol
+    return n*R*t/v
 
 
-#necessary functions (create later)
-def calc_P_from_moles_in_V(T,B,D):
-    # calculate the pressure of a gas given the volume of the container and the amount of moles in that volume
-    #use peng robinson
-    pass
-
-def calc_vapor_to_liq_flux(T,B,D):
-    #calculate the flux from the head space to the liquid
-    pass
-
-def calc_liq_to_liq_flux(T,B,D):
-    #calculate the flux from one liquid layer to the other based on concentration difference
-    pass
-
-def calc_conc_from_moles(T,B,D):
-    #calculate the concentration of gas in liquid layer from amount of moles dissovled
-    pass
-
-def run_simulation(tank,dt,final_t):
-    #simulate the tank with time step dt
-    #might want to switch this out for an implementation in Pygame - for drawing and stuff
-    pass
-
-
-        
