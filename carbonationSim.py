@@ -31,7 +31,7 @@ class Tank:
         self.head_pressure = calcP(self.gas,temp,self.head_vol/gas_holdup)
         self.dissolved_gas = 0
         self.gas_conc = self.dissolved_gas / self.liq_vol
-        self.molfrac_gas = self.dissolved_gas/(self.liq_holdup+self.dissolved_gas)
+        self.percent_sol = self.gas_conc / self.calc_Sol()
 
         #dynamic bubble vars
         self.free_gas_mol = 0 #mol
@@ -80,7 +80,7 @@ class Tank:
         self.free_gas_mol = self.bubbler_flow_mol * dt
         self.num_bubbles = calc_vgas(self.gas,self.free_gas_mol,self.head_pressure,self.temp) / self.gas.avg_bubble_vol
         self.total_bubble_sa = self.num_bubbles * self.gas.avg_bubble_sa
-        self.molfrac_gas = self.dissolved_gas/(self.liq_holdup+self.dissolved_gas)
+        self.percent_sol = self.gas_conc / self.calc_Sol()
 
 def calc_ngas(gas,v,p,t):
     #calculate number of moles of gas from volume, pressure, and temperature
@@ -95,11 +95,11 @@ def calc_vgas(gas,n,p,t):
 def runSimulation(Tank,dt,total_time,eval_time):
     time = 0
     i = eval_time/dt
-    table = [['time (s)','head pressure (bar)','dissolved gas (mol)','concentration (mol/m3)','mole frac gas']]
+    table = [['time (s)','head pressure (bar)','dissolved gas (mol)','concentration (mol/m3)','% Solubility']]
     while time < total_time:
         Tank.update_state(dt)
         if i >= eval_time/dt:
-            table.append([time,Tank.head_pressure,Tank.dissolved_gas,Tank.gas_conc,Tank.molfrac_gas])
+            table.append([time,Tank.head_pressure,Tank.dissolved_gas,Tank.gas_conc,Tank.percent_sol])
             i = 0
         i += 1
         time += dt
@@ -109,5 +109,6 @@ beer = Liquid(density=55.56,viscosity=0.01002)
 co2 = Gas(Tc=304.21,Pc=73.83,w=0.224,avg_bubble_diameter=1e-4)
 Tank1 = Tank(area=0.043355,height=0.59055,temp=333.15,liquid=beer,gas=co2,liq_holdup=1,gas_holdup=0.1,bubbler_flow_vol=3e-4,bubbler_pressure=70,vent_pressure=60)
 print(f'Liquid Height = {Tank1.liq_height}')
+print(f'Liquid Volume = {Tank1.liq_vol}')
 print(f'Head Pressure = {Tank1.head_pressure}')
-print(tabulate(runSimulation(Tank1,0.01,200,1)))
+print(tabulate(runSimulation(Tank1,0.01,2500,100)))
