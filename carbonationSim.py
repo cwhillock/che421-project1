@@ -1,10 +1,11 @@
 import numpy as np
+from math import pow
 from tabulate import tabulate
 from componentPropsAndEOS import Liquid,Gas,calcZ,calcP,R
 #units of R: m3*bar/mol/K
 
 class Tank:
-    def __init__(self,area,height,temp,liquid,gas,liq_holdup,gas_holdup,bubbler_flow_vol,bubbler_pressure):
+    def __init__(self,area,height,temp,liquid,gas,liq_holdup,gas_holdup,bubbler_flow_vol,bubbler_pressure,vent_pressure):
         #static geometry parameters
         self.area = area
         self.height = height
@@ -14,13 +15,15 @@ class Tank:
         self.temp = temp
         self.liq_vol = liq_holdup / liquid.density
         self.liq_height = self.liq_vol / area
+        if self.liq_height >= self.height:
+            raise Exception("too much liquid") 
         self.head_height = height - self.liq_height
         self.head_vol = self.head_height * area
-        self.Dab = calc_Dab(liquid,gas)
 
         #static bubbler parameters
         self.bubbler_flow_vol = bubbler_flow_vol #m3/s
         self.bubbler_flow_mol = calc_ngas(self.gas,bubbler_flow_vol,bubbler_pressure,temp) #mol/s
+        self.vent_pressure = vent_pressure
 
         #dynamic vars
         self.gas_holdup = gas_holdup #mol
@@ -30,21 +33,37 @@ class Tank:
 
         #dynamic bubble vars
         self.free_gas_mol = 0 #mol
-        self.num_bubbles = calc_vgas(self.free_gas_mol,self.head_pressure,self.temp) / gas.avg_bubble_vol
+        self.num_bubbles = calc_vgas(self.gas,self.free_gas_mol,self.head_pressure,self.temp) / gas.avg_bubble_vol
         self.total_bubble_sa = self.num_bubbles * gas.avg_bubble_sa #total surface area of bubbles
+    
+    def calc_Dab(self):
+        #calculate Dab of gas in liquid
+        return 3.24e-9 #m2/s
+
+    def calc_Sol(self):
+        #calculate solubility of gas in liquid henrys law
+        H = 3.4e-2 / 0.001 / 1.01325 #mol/m3/bar
+        return H/self.head_pressure
 
     def calc_bubble_flux(self):
         #calculate flux from bubbles to liquid
-        pass
+        Sc = self.liquid.viscosity / self.liquid.density / self.calc_Dab()
+        rhog = 1/calc_vgas(self.gas,1,self.head_pressure,self.temp) #returns molar density of gas (mol/m3)
+        deltarho = abs(rhog - self.liquid.density)
+        klprime = 2*self.calc_Dab()/self.gas.avg_bubble_diameter + 0.31 * pow(Sc,-2/3) * pow(deltarho*self.liquid.viscosity*9.81/(self.liquid.density)**2,1/3)
+        flux = klprime * (self.calc_Sol() - self.liq_conc)
+        return flux
 
     def calc_head_flux(self):
         #calculate flux from head pressure to liquid
-        pass
+        deltaZ = abs(self.liq_height/2 - self.head_height/2)
+        deltaC = self.calc_Sol() - self.liq_conc
+        return self.calc_Dab() * deltaC / deltaZ
 
     def update_state(self,dt):
         #calculates fluxes from head and bubbles
-        flowfromhead = self.calc_head_flux(self) * self.area * dt #calculates dissolution from headspace to liquid
-        flowfrombubbles = self.calc_bubble_flux(self)*self.total_bubble_sa * dt #calculates dissolution from bubbles to liquid
+        flowfromhead = self.calc_head_flux() * self.area * dt #calculates dissolution from headspace to liquid
+        flowfrombubbles = self.calc_bubble_flux()*self.total_bubble_sa * dt #calculates dissolution from bubbles to liquid
         #bubbles not dissolved go to head space
         leftover_free_gas = self.free_gas_mol - flowfrombubbles
         #add fluxes to amount of dissolved gas
@@ -54,15 +73,11 @@ class Tank:
         #update liquid concentration
         self.liq_conc = self.dissolved_gas / self.liq_vol
         #update head pressure
-        self.head_pressure = calcP(self.gas,self.temp,self.head_vol/self.gas_holdup)
+        self.head_pressure = min(self.vent_pressure,calcP(self.gas,self.temp,self.head_vol/self.gas_holdup))
         #update amount of free gas, bubbles, and total bubble surface area (may not be necessary)
         self.free_gas_mol = self.bubbler_flow_mol * dt
-        self.num_bubbles = calc_vgas(self.free_gas_mol,self.head_pressure,self.temp) / self.gas.avg_bubble_vol
+        self.num_bubbles = calc_vgas(self.gas,self.free_gas_mol,self.head_pressure,self.temp) / self.gas.avg_bubble_vol
         self.total_bubble_sa = self.num_bubbles * self.gas.avg_bubble_sa
-
-def calc_Dab(liquid,gas):
-    #calculate Dab of gas in liquid
-    pass
 
 def calc_ngas(gas,v,p,t):
     #calculate number of moles of gas from volume, pressure, and temperature
@@ -73,3 +88,19 @@ def calc_vgas(gas,n,p,t):
     #calculate volume of gas from pressure and temperature
     z = calcZ(gas,t,p)
     return n*R*t*z/p
+
+def runSimulation(Tank,dt,total_time):
+    time = 0
+    table = [['head pressure (bar)','dissolved gas (mol)','concentration','num bubbles']]
+    while time < total_time:
+        Tank.update_state(dt)
+        table.append([Tank.head_pressure,Tank.dissolved_gas,Tank.liq_conc,Tank.num_bubbles])
+        time += dt
+    return table
+
+beer = Liquid(density=55.56,viscosity=0.01002)
+co2 = Gas(Tc=304.21,Pc=73.83,w=0.224,avg_bubble_diameter=1e-4)
+Tank1 = Tank(area=0.043355,height=0.59055,temp=333.15,liquid=beer,gas=co2,liq_holdup=1,gas_holdup=0.1,bubbler_flow_vol=0.05,bubbler_pressure=5,vent_pressure=4)
+print(f'Liquid Height = {Tank1.liq_height}')
+print(f'Head Pressure = {Tank1.head_pressure}')
+print(tabulate(runSimulation(Tank1,0.01,5)))

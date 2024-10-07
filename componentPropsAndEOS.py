@@ -1,12 +1,13 @@
 from math import pow,pi
 R = 8.20573660809596e-5 * 1.013 #m3*bar/mol/K
+
 class Liquid:
     def __init__(self,density,viscosity):
         self.density = density #mol/m3
         self.viscosity = viscosity #Pa*s
 
 class Gas:
-    def __init__(self,Tc,Pc,w,avg_bubble_diameter):
+    def __init__(self,Tc,Pc,w,avg_bubble_diameter=100e-6):
         self.Tc = Tc
         self.Pc = Pc
         self.w = w
@@ -32,5 +33,4 @@ def calcP(gas,T,V):
     Bhat = B0 + gas.w * B1
     B = Bhat * R * gas.Tc / gas.Pc
     return -R * T / (B-V)
-
 
