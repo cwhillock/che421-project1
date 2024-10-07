@@ -43,7 +43,7 @@ class Tank:
     def calc_Sol(self):
         #calculate solubility of gas in liquid henrys law
         H = 3.4e-2 / 0.001 / 1.01325 #mol/m3/bar
-        return H/self.head_pressure
+        return self.head_pressure/H
 
     def calc_bubble_flux(self):
         #calculate flux from bubbles to liquid
@@ -100,7 +100,7 @@ def runSimulation(Tank,dt,total_time):
 
 beer = Liquid(density=55.56,viscosity=0.01002)
 co2 = Gas(Tc=304.21,Pc=73.83,w=0.224,avg_bubble_diameter=1e-4)
-Tank1 = Tank(area=0.043355,height=0.59055,temp=333.15,liquid=beer,gas=co2,liq_holdup=1,gas_holdup=0.1,bubbler_flow_vol=0.05,bubbler_pressure=5,vent_pressure=4)
+Tank1 = Tank(area=0.043355,height=0.59055,temp=333.15,liquid=beer,gas=co2,liq_holdup=1,gas_holdup=0.1,bubbler_flow_vol=3e-4,bubbler_pressure=30,vent_pressure=25)
 print(f'Liquid Height = {Tank1.liq_height}')
 print(f'Head Pressure = {Tank1.head_pressure}')
 print(tabulate(runSimulation(Tank1,0.01,5)))
