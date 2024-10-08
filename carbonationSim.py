@@ -58,7 +58,7 @@ class Tank:
 
     def calc_head_flux(self):
         #calculate flux from head pressure to liquid
-        deltaZ = abs(self.liq_height/2 - self.head_height/2)
+        deltaZ = abs(self.liq_height/2)
         deltaC = self.calc_Sol() - self.gas_conc
         return self.calc_Dab() * deltaC / deltaZ
 
@@ -105,10 +105,10 @@ def runSimulation(Tank,dt,total_time,eval_time):
         time += dt
     return table
 
-beer = Liquid(density=55.56,viscosity=0.01002)
+beer = Liquid(density=55.56e3,viscosity=0.01002)
 co2 = Gas(Tc=304.21,Pc=73.83,w=0.224,avg_bubble_diameter=1e-4)
-Tank1 = Tank(area=0.043355,height=0.59055,temp=333.15,liquid=beer,gas=co2,liq_holdup=1,gas_holdup=0.1,bubbler_flow_vol=3e-4,bubbler_pressure=70,vent_pressure=60)
+Tank1 = Tank(area=0.043355,height=0.59055,temp=330,liquid=beer,gas=co2,liq_holdup=1000,gas_holdup=0.2,bubbler_flow_vol=1e-5,bubbler_pressure=2.41,vent_pressure=2.07)
 print(f'Liquid Height = {Tank1.liq_height}')
 print(f'Liquid Volume = {Tank1.liq_vol}')
 print(f'Head Pressure = {Tank1.head_pressure}')
-print(tabulate(runSimulation(Tank1,0.01,2500,100)))
+print(tabulate(runSimulation(Tank1,0.05,8000,500)))
