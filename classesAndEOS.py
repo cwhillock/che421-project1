@@ -2,15 +2,17 @@ from math import pow,pi
 R = 8.20573660809596e-5 * 1.013 #m3*bar/mol/K
 
 class Liquid:
-    def __init__(self,density,viscosity):
+    def __init__(self,density,viscosity,MW):
         self.density = density #mol/m3
         self.viscosity = viscosity #Pa*s
+        self.MW = MW #g/mol
 
 class Gas:
-    def __init__(self,Tc,Pc,w,avg_bubble_diameter=100e-6):
+    def __init__(self,Tc,Pc,w,MW,avg_bubble_diameter=100e-6):
         self.Tc = Tc
         self.Pc = Pc
         self.w = w
+        self.MW = MW
         self.avg_bubble_diameter = avg_bubble_diameter #m
         self.avg_bubble_vol = 4/3* pi *(avg_bubble_diameter/2)**3 #average bubble volume
         self.avg_bubble_sa = 4 * pi * (avg_bubble_diameter/2)**2 #average bubble surface area
