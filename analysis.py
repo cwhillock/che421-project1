@@ -10,8 +10,7 @@ co2 = Gas(Tc=304.21,Pc=73.83,w=0.224,MW=44.01,avg_bubble_diameter=5e-4)
 
 #General simulation run
 #"""
-Tank1 = TankV2(area=0.043355,height=0.59055,temp=277.59,liquid=beer,gas=co2,liq_holdup=1036.866,gas_pressure=5,bubbler_flow_vol=1.67e-5,bubbler_pressure=2.7)
-#Tank1 = TankV2(area=0.043355,height=0.59055,temp=277.5,liquid=beer,gas=co2,liq_holdup=1036.866,gas_pressure=2.068,bubbler_flow_vol=1.67e-5,bubbler_pressure=2.7)
+Tank1 = TankV2(area=0.043355,height=0.59055,temp=277.59,liquid=beer,gas=co2,liq_holdup=1036.866,gas_pressure=5,bubbler_flow_vol=1.67e-5,bubbler_pressure=6)
 print(f'Tank Volume={Tank1.liq_vol+Tank1.head_vol}')
 print(f'Liquid Volume={Tank1.liq_vol}')
 print(f'Residence Time={Tank1.gas_residence_time}')
@@ -35,7 +34,7 @@ time_test = np.linspace(10,0.1,10)
 print(time_test)
 final_time_data = []
 for dt in time_test:
-    testTank = TankV2(area=0.043355,height=0.59055,temp=277.59,liquid=beer,gas=co2,liq_holdup=1036.866,gas_pressure=5,bubbler_flow_vol=1.67e-5,bubbler_pressure=2.7)
+    testTank = TankV2(area=0.043355,height=0.59055,temp=277.59,liquid=beer,gas=co2,liq_holdup=1036.866,gas_pressure=5,bubbler_flow_vol=1.67e-5,bubbler_pressure=6)
     blah,data = runSimulationSol(Tank=testTank,final_percent_sol=0.99,dt=dt/1000,eval_time=500)
     final_time_data.append(data[-1][0])
 plt.plot(time_test,final_time_data,'o')
@@ -49,7 +48,7 @@ plt.show()
 dp_arr = np.linspace(1e-4,1e-3,5)
 for dp in dp_arr:
     co2 = Gas(Tc=304.21,Pc=73.83,w=0.224,MW=44.01,avg_bubble_diameter=dp)
-    Tank1=TankV2(area=0.043355,height=0.59055,temp=277.59,liquid=beer,gas=co2,liq_holdup=1036.866,gas_pressure=5,bubbler_flow_vol=1.67e-5,bubbler_pressure=2.7)
+    Tank1=TankV2(area=0.043355,height=0.59055,temp=277.59,liquid=beer,gas=co2,liq_holdup=1036.866,gas_pressure=5,bubbler_flow_vol=1.67e-5,bubbler_pressure=6)
     blah,data = runSimulationTime(Tank=Tank1,total_time=600,dt=0.01,eval_time=1)
     time = [row[0] for row in data]
     sol_percent = [row[3]*100 for row in data]
@@ -65,7 +64,7 @@ plt.show()
 T_arr = np.arange(270,320,5)
 T_results = []
 for T in T_arr:
-    testTank = TankV2(area=0.043355,height=0.59055,temp=T,liquid=beer,gas=co2,liq_holdup=1036.866,gas_pressure=5,bubbler_flow_vol=1.67e-5,bubbler_pressure=2.7)
+    testTank = TankV2(area=0.043355,height=0.59055,temp=T,liquid=beer,gas=co2,liq_holdup=1036.866,gas_pressure=5,bubbler_flow_vol=1.67e-5,bubbler_pressure=6)
     blah,data = runSimulationSol(Tank=testTank,final_percent_sol=0.99,dt=0.01,eval_time=500)
     T_results.append((data[-1][0]))
 plt.plot(T_arr,T_results,'o')
